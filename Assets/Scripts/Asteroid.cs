@@ -6,15 +6,16 @@ public class Asteroid
 {
     public Asteroid() { }
 
-    public Asteroid(float speed, Vector2 position, Vector2 direction, int id, bool isToBeDestroyed)
+    public Asteroid(float speed, Vector2 position, Vector2 direction, int id)
     {
         Speed = speed;
         Position = position;
         Direction = direction;
-        ChunkCoordinates = new Vector2Int((int)position.x, (int)position.y); // TODO: temporary?
+        ChunkCoordinates =  Vector2Int.FloorToInt(position); // TODO: temporary?
         PreviousChunkCoordinates = ChunkCoordinates;
         Id = id;
-        IsToBeDestroyed = isToBeDestroyed;
+        IsRespawning = false;
+        RespawnTimer = 0;
     }
 
     public float Speed { get; set; }
@@ -23,9 +24,8 @@ public class Asteroid
     public Vector2Int ChunkCoordinates { get; set; }
     public Vector2Int PreviousChunkCoordinates { get; set; }
     public int Id { get; set; }
-    public bool IsToBeDestroyed { get; set; }
-
-    private Vector2Int _chunkCoordinates;
+    public bool IsRespawning { get; set; }
+    public float RespawnTimer { get; set; }
 
     /// <summary>
     /// TODO: 
@@ -33,13 +33,8 @@ public class Asteroid
     /// <returns></returns>
     public bool HasEnteredNewChunk()
     {
-        // This used to be the source of most of the garbage collection
-        //ChunkCoordinates = new Vector2Int((int)Position.x, (int)Position.y);
-        _chunkCoordinates.x = (int)Position.x;
-        _chunkCoordinates.y = (int)Position.y;
-
-        ChunkCoordinates = _chunkCoordinates;
-
+        // I tried different ways to set this since it happens so often, it did not affect performance.
+        ChunkCoordinates = Vector2Int.FloorToInt(Position);
 
         if (ChunkCoordinates != PreviousChunkCoordinates)
         {
