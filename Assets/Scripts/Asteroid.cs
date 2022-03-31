@@ -44,6 +44,19 @@ public class Asteroid
         return false;
     }
 
+    public void UpdatePosition(Vector2 newPosition)
+    {
+        Position = newPosition;
+    }
+
+    /// <summary>
+    /// TODO: 
+    /// </summary>
+    public void UpdateChunkCoordinates()
+    {
+        ChunkCoordinates = Vector2Int.FloorToInt(Position);
+    }
+
     /// <summary>
     /// TODO: 
     /// </summary>

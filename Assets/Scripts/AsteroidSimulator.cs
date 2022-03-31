@@ -12,9 +12,22 @@ public class AsteroidSimulator : MonoBehaviour
     [SerializeField] private float _minSpeed;
     [SerializeField] private float _maxSpeed;
 
+    [SerializeField] private Transform player;
+
+    [Header("Read my tooltip")]
+    [Tooltip("This boolean is here to set whether the simulated asteroids should check if they collided with another asteroid in a diagonally neighbouring chunk. " +
+        "This constitutes around 2.5% of all off-screen collisions but slows down performance by 35%. ")]
+    [SerializeField]
+    private bool diagonalChecks;
+
     private int _idCounter;
     private int _groupCounter;
     private const int _respawnTime = 1;
+
+    // TODO: For testing purposes
+    private int _regularCounter;
+    private int _orthoCounter;
+    private int _diagCounter;
 
     // For manipulation during spawning.
     private Asteroid _asteroidToSpawn = new Asteroid();
@@ -44,7 +57,9 @@ public class AsteroidSimulator : MonoBehaviour
     private Dictionary<Vector2Int, List<Asteroid>> _allChunks = new Dictionary<Vector2Int, List<Asteroid>>();
 
 
-
+    /// <summary>
+    /// TODO: Split into initialization method and some other shit
+    /// </summary>
     private void Start()
     {
         _idCounter = 0;
@@ -57,9 +72,9 @@ public class AsteroidSimulator : MonoBehaviour
         }
 
         // We create the asteroids and assign them to their groups.
-        for (int i = 0; i < _gridLength; i++)
+        for (int i = 0; i < _gridWidth; i++)
         {
-            for (int j = 0; j < _gridWidth; j++)
+            for (int j = 0; j < _gridLength; j++)
             {
                 _asteroidToSpawn = new Asteroid(Random.Range(_minSpeed, _maxSpeed),
                                                 new Vector2(i - _gridLength / 2, j - _gridWidth / 2),
@@ -98,6 +113,8 @@ public class AsteroidSimulator : MonoBehaviour
 
     private void Update()
     {
+        //_orthoCounter = 0;
+        //_diagCounter = 0;
         // Every x frames we check an asteroid group's state, where x is total number of groups
         // This splits the load across multiple frames, and the off-screen simulation does not have to be perfect.
         // Assuming the target framerate is 60, with the current asteroid and player max speed and current asteroid size, it is still reasonably accurate up to 15 groups.
@@ -108,6 +125,13 @@ public class AsteroidSimulator : MonoBehaviour
 
         CheckAsteroidStatesbyGroup(_groupCounter);
         _groupCounter++;
+    }
+
+    private void OnApplicationQuit()
+    {
+        Debug.Log("Regular: " + _regularCounter);
+        Debug.Log("ORTHO: " + _orthoCounter);
+        Debug.Log("DIAGONAL: " + _diagCounter);
     }
 
     /// <summary>
@@ -188,6 +212,39 @@ public class AsteroidSimulator : MonoBehaviour
         }
     }
 
+    private void ReAddToNewChunk(Asteroid asteroid)
+    {
+        asteroid.UpdateChunkCoordinates();
+        List<Asteroid> asteroidList;
+        if (_allChunks.TryGetValue(asteroid.ChunkCoordinates, out asteroidList))
+        {
+            asteroidList.Add(asteroid);
+        }
+        else
+        {
+            _asteroidListForAddingToDict = new List<Asteroid>();
+            _asteroidListForAddingToDict.Add(asteroid);
+            _allChunks.Add(asteroid.ChunkCoordinates, _asteroidListForAddingToDict);
+        }
+
+        if (asteroid.HasEnteredNewChunk()) // TODO: Unity profiler claims there's garbage allocation on this line
+        {
+            if (_allChunks.TryGetValue(asteroid.PreviousChunkCoordinates, out asteroidList))
+            {
+                asteroidList.Remove(asteroid);
+
+                // Does end up helping with optimization - removes unnecessary chunks
+                // Even without asteroids destroying each other the number of chunks ends up being almost halved almost immediately and more importantly it doesn't grow indefinitely
+                if (_allChunks[asteroid.PreviousChunkCoordinates].Count == 0)
+                {
+                    _allChunks.Remove(asteroid.PreviousChunkCoordinates);
+                }
+            }
+        }
+
+        asteroid.UpdatePreviousChunkCoordinates();
+    }
+
     /// <summary>
     /// TODO: 
     /// </summary>
@@ -198,7 +255,7 @@ public class AsteroidSimulator : MonoBehaviour
         {
             if ((asteroid.Position - _allChunks[asteroid.ChunkCoordinates][j].Position).magnitude < 0.3f && (asteroid.Position - _allChunks[asteroid.ChunkCoordinates][j].Position).magnitude != 0)
             {
-                //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
+                _regularCounter++;
                 asteroid.IsRespawning = true;
                 _allChunks[asteroid.ChunkCoordinates][j].IsRespawning = true;
                 return _allChunks[asteroid.ChunkCoordinates][j];
@@ -231,6 +288,7 @@ public class AsteroidSimulator : MonoBehaviour
             {
                 if (HasCollided(asteroid.Position, asteroidList[j].Position))
                 {
+                    _orthoCounter++;
                     asteroid.IsRespawning = true;
                     asteroidList[j].IsRespawning = true;
                     return asteroidList[j];
@@ -248,6 +306,7 @@ public class AsteroidSimulator : MonoBehaviour
             {
                 if (HasCollided(asteroid.Position, asteroidList[j].Position))
                 {
+                    _orthoCounter++;
                     asteroid.IsRespawning = true;
                     asteroidList[j].IsRespawning = true;
                     return asteroidList[j];
@@ -265,6 +324,7 @@ public class AsteroidSimulator : MonoBehaviour
             {
                 if (HasCollided(asteroid.Position, asteroidList[j].Position))
                 {
+                    _orthoCounter++;
                     asteroid.IsRespawning = true;
                     asteroidList[j].IsRespawning = true;
                     return asteroidList[j];
@@ -282,6 +342,7 @@ public class AsteroidSimulator : MonoBehaviour
             {
                 if (HasCollided(asteroid.Position, asteroidList[j].Position))
                 {
+                    _orthoCounter++;
                     asteroid.IsRespawning = true;
                     asteroidList[j].IsRespawning = true;
                     return asteroidList[j];
@@ -290,79 +351,86 @@ public class AsteroidSimulator : MonoBehaviour
             }
         }
 
-        _northEastChunkCoordinates = chunkCoordinates;
-        _northEastChunkCoordinates.x = chunkCoordinates.x + 1;
-        _northEastChunkCoordinates.y = chunkCoordinates.y + 1;
-
-        if (_allChunks.TryGetValue(_northEastChunkCoordinates, out asteroidList))
+        if (diagonalChecks)
         {
-            for (int j = 0; j < asteroidList.Count; j++)
+            _northEastChunkCoordinates = chunkCoordinates;
+            _northEastChunkCoordinates.x = chunkCoordinates.x + 1;
+            _northEastChunkCoordinates.y = chunkCoordinates.y + 1;
+
+            if (_allChunks.TryGetValue(_northEastChunkCoordinates, out asteroidList))
             {
-                if (HasCollided(asteroid.Position, asteroidList[j].Position))
+                for (int j = 0; j < asteroidList.Count; j++)
                 {
-                    asteroid.IsRespawning = true;
-                    asteroidList[j].IsRespawning = true;
-                    return asteroidList[j];
-                    //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
+                    if (HasCollided(asteroid.Position, asteroidList[j].Position))
+                    {
+                        _diagCounter++;
+                        asteroid.IsRespawning = true;
+                        asteroidList[j].IsRespawning = true;
+                        return asteroidList[j];
+                        //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
+                    }
+                }
+            }
+
+            _southEastChunkCoordinates = chunkCoordinates;
+            _southEastChunkCoordinates.x = chunkCoordinates.x + 1;
+            _southEastChunkCoordinates.y = chunkCoordinates.y - 1;
+
+
+            if (_allChunks.TryGetValue(_southEastChunkCoordinates, out asteroidList))
+            {
+                for (int j = 0; j < asteroidList.Count; j++)
+                {
+                    if (HasCollided(asteroid.Position, asteroidList[j].Position))
+                    {
+                        _diagCounter++;
+                        asteroid.IsRespawning = true;
+                        asteroidList[j].IsRespawning = true;
+                        return asteroidList[j];
+                        //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
+                    }
+                }
+            }
+
+            _northWestChunkCoordinates = chunkCoordinates;
+            _northWestChunkCoordinates.x = chunkCoordinates.x - 1;
+            _northWestChunkCoordinates.y = chunkCoordinates.y + 1;
+
+            if (_allChunks.TryGetValue(_northWestChunkCoordinates, out asteroidList))
+            {
+                for (int j = 0; j < asteroidList.Count; j++)
+                {
+                    if (HasCollided(asteroid.Position, asteroidList[j].Position))
+                    {
+                        _diagCounter++;
+                        asteroid.IsRespawning = true;
+                        asteroidList[j].IsRespawning = true;
+                        return asteroidList[j];
+                        //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
+                    }
+                }
+            }
+
+            _southWestChunkCoordinates = chunkCoordinates;
+            _southWestChunkCoordinates.x = chunkCoordinates.x - 1;
+            _southWestChunkCoordinates.y = chunkCoordinates.y - 1;
+
+            if (_allChunks.TryGetValue(_southWestChunkCoordinates, out asteroidList))
+            {
+                for (int j = 0; j < asteroidList.Count; j++)
+                {
+                    if (HasCollided(asteroid.Position, asteroidList[j].Position))
+                    {
+                        _diagCounter++;
+                        asteroid.IsRespawning = true;
+                        asteroidList[j].IsRespawning = true;
+                        return asteroidList[j];
+                        //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
+                    }
                 }
             }
         }
-
-        _southEastChunkCoordinates = chunkCoordinates;
-        _southEastChunkCoordinates.x = chunkCoordinates.x + 1;
-        _southEastChunkCoordinates.y = chunkCoordinates.y - 1;
-
-
-        if (_allChunks.TryGetValue(_southEastChunkCoordinates, out asteroidList))
-        {
-            for (int j = 0; j < asteroidList.Count; j++)
-            {
-                if (HasCollided(asteroid.Position, asteroidList[j].Position))
-                {
-                    asteroid.IsRespawning = true;
-                    asteroidList[j].IsRespawning = true;
-                    return asteroidList[j];
-                    //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
-                }
-            }
-        }
-
-        _northWestChunkCoordinates = chunkCoordinates;
-        _northWestChunkCoordinates.x = chunkCoordinates.x - 1;
-        _northWestChunkCoordinates.y = chunkCoordinates.y + 1;
-
-        if (_allChunks.TryGetValue(_northWestChunkCoordinates, out asteroidList))
-        {
-            for (int j = 0; j < asteroidList.Count; j++)
-            {
-                if (HasCollided(asteroid.Position, asteroidList[j].Position))
-                {
-                    asteroid.IsRespawning = true;
-                    asteroidList[j].IsRespawning = true;
-                    return asteroidList[j];
-                    //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
-                }
-            }
-        }
-
-        _southWestChunkCoordinates = chunkCoordinates;
-        _southWestChunkCoordinates.x = chunkCoordinates.x - 1;
-        _southWestChunkCoordinates.y = chunkCoordinates.y - 1;
-
-        if (_allChunks.TryGetValue(_southWestChunkCoordinates, out asteroidList))
-        {
-            for (int j = 0; j < asteroidList.Count; j++)
-            {
-                if (HasCollided(asteroid.Position, asteroidList[j].Position))
-                {
-                    asteroid.IsRespawning = true;
-                    asteroidList[j].IsRespawning = true;
-                    return asteroidList[j];
-                    //Debug.Log("Asteroids " + _allAsteroids[i].Id + " and " + _allChunks[_allAsteroids[i].ChunkCoordinates][j].Id + " have been destroyed.");
-                }
-            }
-        }
-
+        
         return null;
     }
 
@@ -473,17 +541,32 @@ public class AsteroidSimulator : MonoBehaviour
     /// <param name="asteroid"></param>
     private void RespawnAsteroid(Asteroid asteroid)
     {
-        List<Asteroid> asteroidList;
-        if (_allChunks.TryGetValue(asteroid.ChunkCoordinates, out asteroidList))
+        Vector2 newPosition;
+
+        bool isXPositive = Random.Range(0, 2) > 0;
+        bool isYPositive = Random.Range(0, 2) > 0;
+        // TODO: Change to just outside camera view, or rather, make constant
+        if (isXPositive)
         {
-            asteroidList.Add(asteroid);
+            newPosition.x = player.position.x + Random.Range(20f, _gridWidth);
         }
         else
         {
-            _asteroidListForAddingToDict = new List<Asteroid>();
-            _asteroidListForAddingToDict.Add(asteroid);
-            _allChunks.Add(asteroid.ChunkCoordinates, _asteroidListForAddingToDict);
+            newPosition.x = player.position.x - Random.Range(20f, _gridWidth);
         }
+
+        if (isYPositive)
+        {
+            newPosition.y = player.position.y + Random.Range(20f, _gridLength);
+        }
+        else
+        {
+            newPosition.y = player.position.y - Random.Range(20f, _gridLength);
+        }
+
+        asteroid.UpdatePosition(newPosition);
+
+        ReAddToNewChunk(asteroid);
     }
 
     /// <summary>
@@ -494,7 +577,7 @@ public class AsteroidSimulator : MonoBehaviour
     /// <returns></returns>
     private bool HasCollided(Vector2 asteroid1Position, Vector2 asteroid2Position)
     {
-        // Checking against 0.3f because that's 1 asteroid's diameter - and we're checking whether they're touching tips.
+        // Checking against 0.3f because that's 1 asteroid's diameter - and we're checking whether they're at least touching tips - meaning if they're 2 radiuses = 1 diameter away from each other.
         // TODO: also probably make constant
         if ((asteroid1Position - asteroid2Position).magnitude < 0.3f)
         {
