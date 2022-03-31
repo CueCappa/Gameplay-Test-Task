@@ -1,0 +1,38 @@
+
+This is just a diary of sorts on my thought process, outlining what I felt was the biggest challenge and how I came to the eventual solution.
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+I identified optimization as the main issue immediately. How to continuously calculate movement and collision of 25600 asteroids at the same time, all the time?
+Now, the movement part is not that much of a problem, I wrote a little simulation of just updating a vector2 of abstract objects in FixedUpdate, 
+based on a randomized speed and direction. And it worked well enough as a start - can optimize that part later.
+
+The collision however, is the bigger issue. my first, bruteforce idea, was to just check the distance between each asteroid. 
+Which means some 650 million checks for a 160x160 grid. 
+I knew it won't work but I did it anyway to see just how badly it runs, and of course, it didn't run at all. 
+It ran better for a 50x50 grid, meaning 2500 asteroids, meaning ~6.5 million checks, but that's only because I am working and testing on a beastly PC.
+Either way, that definitely would not work. 
+
+My next idea was to use a k-d tree, which I tried, and it definitely helped, but it did not help enough.
+Now here, I am sure my implementation of the tree wasn't 100% optimal, but since it did reduce the calculation time by a factor of 10, I don't think it was bad.
+Ultimately, I figured there is probably a better solution and that I should focus on finding that.
+
+So, I identified the main issue as the amount of asteroids that each asteroid needs to check. It can't be all of them, because that's n^2.
+How to reduce that amount? First idea here was to precalculate every asteroid's path within ~200 seconds - everything past that is almost irrelevant and can be recalculated later.
+What I was looking for here were intersections of paths - meaning figure out for every asteroid which other asteroids are even a potential collision threat.
+This still meant 325 million checks at the start - since I was doing the checks as I was creating the asteroids it was n^2/2, first asteroid had 0 to check for, last one had 25600.
+This still took too long. It did manage to start after 30 seconds of calculating, but eh, that's no way to optimize. 
+And on average it only reduced the amount of collision checks by a factor of 10. Each asteroid was left with some 2500-3000 intersections on average - not good enough.
+
+*However* it gave me another idea. I was on the right track, reduce the amount of targets for collision checks. So I made a grid, which treats the player as 0,0.
+This grid is 1:1 with actual Unity coordinates - local position from player of course - but it is ints only. So now I have chunks which have a size of 1 unit. 
+I check each asteroid's chunk and check for collision with all other asteroids in that and *neighbouring* chunks - since they can still collide through chunk borders.
+Because I know the player's and asteroids' max speed, I can also split the asteroids into groups, 5 in this case, and check for chunk change and collision every 5th fixed update.
+Or rather every fixed update checks a different group, meaning every group is checked 10 times a second. The groups are set on asteroid creation and are immutable.
+
+Now, this is not perfectly accurate, but this is for off-screen asteroids only and it should detect a *large* majority of collisions. 
+And besides, the numbers can be tweaked if more off-screen accuracy is needed.
+
+The main issue I have with my implementation is that I know it can be better still, even before involving parallel processing. 
+For chunks I used a dictionary which has Vector2Ints as keys - these are the chunk coordinates, and a List<Asteroid> as value. 
+I feel like this part can be optimized further, but I'm not sure how, and I'm not sure it's needed. It works well enough, but still bothers me.
