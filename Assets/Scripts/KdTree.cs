@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-public class KdTree<T> : IEnumerable<T>, IEnumerable where T : Asteroid
+public class KdTree<T> : IEnumerable<T>, IEnumerable where T : SimulatedAsteroid
 {
     protected KdNode _root;
     protected KdNode _last;

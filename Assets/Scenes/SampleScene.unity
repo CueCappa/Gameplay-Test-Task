@@ -211,7 +211,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 0.5, z: -10}
+  m_LocalPosition: {x: 1, y: 1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -232,6 +232,36 @@ MonoBehaviour:
   player: {fileID: 618949028}
   cameraHeight: -10
   adjustedPosition: {x: 0, y: 0, z: 0}
+--- !u!1 &1207876901
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1207876902}
+  m_Layer: 0
+  m_Name: AsteroidPool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1207876902
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207876901}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.5372913, y: 1.6634673, z: 0.43601608}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1779104180
 GameObject:
   m_ObjectHideFlags: 0
@@ -243,6 +273,7 @@ GameObject:
   - component: {fileID: 1779104182}
   - component: {fileID: 1779104181}
   - component: {fileID: 1779104183}
+  - component: {fileID: 1779104184}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -296,7 +327,25 @@ MonoBehaviour:
   _minSpeed: 0.3
   _maxSpeed: 1
   player: {fileID: 618949033}
-  diagonalChecks: 0
+  asteroidManager: {fileID: 1779104184}
+  diagonalChecks: 1
+--- !u!114 &1779104184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1779104180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49ffd3d898ef70e45a8b39eb4be4a786, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _amountOfAsteroids: 300
+  _objectToPool: {fileID: 7847217793490998740, guid: 0128b03d73b136e4d89fefd65e75ef18, type: 3}
+  _asteroidParent: {fileID: 1207876902}
+  _asteroidPool: []
+  player: {fileID: 618949033}
 --- !u!1001 &2208188461857846480
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -322,11 +371,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2208188461398318455, guid: f28974c81abad6f48aabfe538f60e05f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2208188461398318455, guid: f28974c81abad6f48aabfe538f60e05f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2208188461398318455, guid: f28974c81abad6f48aabfe538f60e05f, type: 3}
       propertyPath: m_LocalPosition.z
