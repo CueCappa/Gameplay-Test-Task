@@ -328,7 +328,7 @@ MonoBehaviour:
   _maxSpeed: 1
   player: {fileID: 618949033}
   asteroidManager: {fileID: 1779104184}
-  diagonalChecks: 1
+  diagonalChecks: 0
 --- !u!114 &1779104184
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -341,7 +341,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49ffd3d898ef70e45a8b39eb4be4a786, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _amountOfAsteroids: 300
+  _amountOfAsteroids: 20
   _objectToPool: {fileID: 7847217793490998740, guid: 0128b03d73b136e4d89fefd65e75ef18, type: 3}
   _asteroidParent: {fileID: 1207876902}
   _asteroidPool: []

@@ -48,7 +48,7 @@ public class AsteroidManager : MonoBehaviour
             else
             {
                 float distance = Vector2.Distance(player.position, _asteroidPool[i].transform.position);
-                if (distance > 10) // check if too far from player
+                if (distance > 6) // check if too far from player
                 {
                     _link[_asteroidPool[i]].IsSimulated = true;
                     _link[_asteroidPool[i]].Position = new Vector2(_asteroidPool[i].transform.position.x, _asteroidPool[i].transform.position.y);
@@ -63,6 +63,10 @@ public class AsteroidManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// TODO: 
+    /// </summary>
+    /// <returns></returns>
     public GameObject GetPooledAsteroid()
     {
         for (int i = 0; i < _amountOfAsteroids; i++)
@@ -75,6 +79,10 @@ public class AsteroidManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// TODO: 
+    /// </summary>
+    /// <param name="simulatedAsteroid"></param>
     public void MakeAsteroidReal(SimulatedAsteroid simulatedAsteroid)
     {
         GameObject asteroid = GetPooledAsteroid();
@@ -105,6 +113,10 @@ public class AsteroidManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// TODO: 
+    /// </summary>
+    /// <param name="asteroid"></param>
     public void SimulateAsteroid(GameObject asteroid)
     {
         _link.Remove(asteroid);

@@ -18,7 +18,7 @@ public class AsteroidSimulator : MonoBehaviour
 
     [Header("Read my tooltip")]
     [Tooltip("This boolean is here to set whether the simulated asteroids should check if they collided with another asteroid in a diagonally neighbouring chunk. " +
-        "This constitutes around 2.5% of all off-screen collisions but slows down performance by 35%. ")]
+        "This constitutes around 5% of all off-screen collisions but slows down performance by 35%. ")]
     [SerializeField]
     private bool diagonalChecks;
 
@@ -143,6 +143,9 @@ public class AsteroidSimulator : MonoBehaviour
         {
             Debug.Log(_testTimer.ToString("0.00") + " seconds has passed.");
             Debug.Log("Total: " + (_regularCounter + _orthoCounter + _diagCounter).ToString());
+            Debug.Log("Regular: " + _regularCounter);
+            Debug.Log("ORTHO: " + _orthoCounter);
+            Debug.Log("DIAGONAL: " + _diagCounter);
             _testTimer = 0;
         }
         else
@@ -294,7 +297,7 @@ public class AsteroidSimulator : MonoBehaviour
     {
         for (int j = 0; j < _allChunks[simulatedAsteroid.ChunkCoordinates].Count; j++)
         {
-            if ((simulatedAsteroid.Position - _allChunks[simulatedAsteroid.ChunkCoordinates][j].Position).magnitude < 0.2f && (simulatedAsteroid.Position - _allChunks[simulatedAsteroid.ChunkCoordinates][j].Position).magnitude != 0)
+            if ((simulatedAsteroid.Position - _allChunks[simulatedAsteroid.ChunkCoordinates][j].Position).magnitude < 0.5f && (simulatedAsteroid.Position - _allChunks[simulatedAsteroid.ChunkCoordinates][j].Position).magnitude != 0)
             {
                 _regularCounter++;
                 simulatedAsteroid.IsRespawning = true;
@@ -639,7 +642,7 @@ public class AsteroidSimulator : MonoBehaviour
     {
         // Checking against 0.3f because that's 1 asteroid's diameter - and we're checking whether they're at least touching tips - meaning if they're 2 radiuses = 1 diameter away from each other.
         // TODO: also probably make constant
-        if ((asteroid1Position - asteroid2Position).magnitude < 0.3f)
+        if ((asteroid1Position - asteroid2Position).magnitude < 0.5f)
         {
             return true;
         }
@@ -653,7 +656,7 @@ public class AsteroidSimulator : MonoBehaviour
     private void CheckIfAsteroidIsReal(SimulatedAsteroid simulatedAsteroid)
     {
         float distance = Vector2.Distance(simulatedAsteroid.Position, new Vector2(player.position.x, player.position.y));
-        if (distance < 10) // asteroid is close enough
+        if (distance < 5) // asteroid is close enough
         {
             asteroidManager.MakeAsteroidReal(simulatedAsteroid);
             simulatedAsteroid.IsSimulated = false;
