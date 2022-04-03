@@ -1,7 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Denotes a simulated off-screen asteroid and manages some stats.
+/// </summary>
 public class SimulatedAsteroid
 {
     public SimulatedAsteroid() { }
@@ -11,7 +12,7 @@ public class SimulatedAsteroid
         Speed = speed;
         Position = position;
         Direction = direction;
-        ChunkCoordinates = Vector2Int.FloorToInt(position); // TODO: temporary?
+        ChunkCoordinates = Vector2Int.FloorToInt(position);
         PreviousChunkCoordinates = ChunkCoordinates;
         Id = id;
         IsRespawning = false;
@@ -27,13 +28,12 @@ public class SimulatedAsteroid
     public int Id { get; set; }
     public bool IsRespawning { get; set; }
     public float RespawnTimer { get; set; }
-
     public bool IsSimulated { get; set; }
 
     /// <summary>
-    /// TODO: 
+    /// Updates the asteroids current chunk based on current position and checks if it's a new one.
     /// </summary>
-    /// <returns></returns>
+    /// <returns> True if the asteroid has entered a new chunk, otherwise false. </returns>
     public bool HasEnteredNewChunk()
     {
         // I tried different ways to set this since it happens so often, it did not affect performance.
@@ -48,16 +48,7 @@ public class SimulatedAsteroid
     }
 
     /// <summary>
-    /// TODO: 
-    /// </summary>
-    /// <param name="newPosition"></param>
-    public void UpdatePosition(Vector2 newPosition)
-    {
-        Position = newPosition;
-    }
-
-    /// <summary>
-    /// TODO: 
+    /// Updates the asteroid's current chunk coordinates. 
     /// </summary>
     public void UpdateChunkCoordinates()
     {
@@ -65,7 +56,7 @@ public class SimulatedAsteroid
     }
 
     /// <summary>
-    /// TODO: 
+    /// Updates the asteroid's previous chunk coordinates. 
     /// </summary>
     public void UpdatePreviousChunkCoordinates()
     {

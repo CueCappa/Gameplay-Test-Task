@@ -1,25 +1,70 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Manages the game state
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    // TODO: CHECK IF ALL CURRENTLY PRIVATE FIELDS HAVE STAYED PRIVATE, CHECK NAMING CONVENTION.
-    [SerializeField] private int gridLength;
-    [SerializeField] private int gridWidth;
-    [SerializeField] private GameObject asteroidPrefab;
+    [SerializeField] private Text _scoreText;
+    [SerializeField] private Text _finalScoreText;
+    [SerializeField] private GameObject _restartPanel;
+    [SerializeField] private string _sceneName;
 
-    private void Start()
+    // This is here in case "12. Make sure every asteroid speed and direction is persistent every game." means same starting state for every asteroid.
+    [Header("Set 0 for random")]
+    [SerializeField]
+    private int _seed = 0;
+
+    private int _score = 0;
+    private bool _gamePaused = false;
+
+    public bool GamePaused => _gamePaused;
+
+    private void Awake()
     {
-        for (int i = 0; i < gridLength; i++)
+        if (_seed != 0)
         {
-            for(int j = 0; j < gridWidth; j++)
-            {
-                Instantiate(asteroidPrefab, new Vector3(i - gridLength/2, j - gridWidth/2, 0), Quaternion.identity);
-            }
+            Random.InitState(_seed);
         }
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+    }
+
+    /// <summary>
+    /// Since the score can only go up by 1, this updates the score and updates the text showing it.
+    /// </summary>
+    public void UpdateScore()
+    {
+        _score++;
+        _scoreText.text = "Score: " + _score.ToString();
+    }
+
+    /// <summary>
+    /// Pauses the simulation and game, opens game over panel.
+    /// </summary>
+    public void GameOver()
+    {
+        _gamePaused = true;
+        Time.timeScale = 0;
+        _finalScoreText.text = "Final score: " + _score.ToString() + "!";
+        _restartPanel.SetActive(true);
+    }
+
+    /// <summary>
+    /// Restarts the game.
+    /// </summary>
+    public void RestartGame()
+    {
+        _gamePaused = false;
+        Time.timeScale = 1;
+        SceneManager.LoadScene(_sceneName);
     }
 }

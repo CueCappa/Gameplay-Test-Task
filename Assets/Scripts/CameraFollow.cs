@@ -9,10 +9,7 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float cameraHeight;
     [SerializeField] private Vector3 adjustedPosition;
 
-    /// <summary>
-    /// We're putting the logic in late update *for now* to make sure it happens after the player moves but before the next frame, since the player moves in update
-    /// TODO: Move camera from player or god script?
-    /// </summary>
+    // I'm putting the logic for camera movement in late update to make sure it happens after the player moves but before the next frame, since the player moves in update
     private void LateUpdate()
     {
         adjustedPosition = player.transform.position;

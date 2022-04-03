@@ -30,9 +30,14 @@ I check each asteroid's chunk and check for collision with all other asteroids i
 Because I know the player's and asteroids' max speed, I can also split the asteroids into groups, 5 in this case, and check for chunk change and collision every 5th fixed update.
 Or rather every fixed update checks a different group, meaning every group is checked 10 times a second. The groups are set on asteroid creation and are immutable.
 
-Now, this is not perfectly accurate, but this is for off-screen asteroids only and it should detect a *large* majority of collisions. 
+Now, this is not perfectly accurate, but this is for off-screen asteroids only and it should detect a *_large_* majority of collisions. 
 And besides, the numbers can be tweaked if more off-screen accuracy is needed.
 
 The main issue I have with my implementation is that I know it can be better still, even before involving parallel processing. 
+Especially since I noticed your benchmarking stats are 60 FPS for ~65000 and 30 FPS for ~260 000 - meaning only half FPS for 4 times as many.
+This means there's a logarithmic solution to checking collisions, I just didn't think of it.
+
 For chunks I used a dictionary which has Vector2Ints as keys - these are the chunk coordinates, and a List<Asteroid> as value. 
 I feel like this part can be optimized further, but I'm not sure how, and I'm not sure it's needed. It works well enough, but still bothers me.
+
+
